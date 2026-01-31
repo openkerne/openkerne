@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>openKERNEL | Documentation</title>
+    <!-- Tech Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --primary: #00f0ff;
+            --secondary: #7000ff;
+            --alert: #ff4444;
+            --accent-wip: #d29922;
+            --text-main: #e6edf3;
+            --text-muted: #8b949e;
+            --border: #30363d;
+            --font-main: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+            --sidebar-width: 280px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            margin: 0;
+            perspective: 1000px; /* For Scroll 3D effects */
+        }
+
+        /* --- 3D Starfield Background --- */
+        #star-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(circle at center, #0b0d12, #000);
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+        .gradient-text { background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* --- Header --- */
+        header {
+            position: fixed; top: 0; width: 100%; background: rgba(5, 5, 5, 0.95); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border); z-index: 1000;
+            transform: translateZ(100px); /* Pop out header */
+        }
+        nav { display: flex; justify-content: space-between; align-items: center; height: 70px; }
+        .logo { font-family: var(--font-code); font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: var(--text-main); text-decoration: none; }
+        .nav-link { color: var(--text-muted); font-size: 0.9rem; cursor: pointer; transition: 0.3s; text-decoration: none; margin-left: 20px; }
+        .nav-link:hover { color: var(--primary); transform: scale(1.1); }
+
+        /* --- Layout --- */
+        #docs { padding: 140px 0 100px; display: flex; justify-content: center; transform-style: preserve-3d; }
+        .docs-wrapper { display: flex; gap: 60px; width: 100%; align-items: flex-start; }
+
+        /* --- 3D Sidebar --- */
+        .docs-sidebar {
+            width: var(--sidebar-width); flex-shrink: 0;
+            position: sticky; top: 100px;
+            transform-style: preserve-3d;
+            transition: transform 0.3s;
+        }
+        
+        .sidebar-box {
+            background: rgba(22, 27, 34, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            transform: translateZ(50px); /* Push sidebar closer to viewer */
+            box-shadow: -10px 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .docs-nav-link {
+            display: block; padding: 10px 15px; margin-bottom: 5px;
+            color: var(--text-muted); text-decoration: none;
+            font-size: 0.9rem; border-left: 2px solid transparent;
+            transition: 0.2s;
+        }
+        .docs-nav-link:hover, .docs-nav-link.active { color: var(--primary); border-left-color: var(--primary); background: rgba(0, 240, 255, 0.05); }
+        .docs-nav-header { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-main); margin: 25px 0 10px 15px; }
+
+        /* --- 3D Content --- */
+        .docs-content { flex-grow: 1; max-width: 800px; transform-style: preserve-3d; }
+        
+        .doc-section { 
+            margin-bottom: 80px; scroll-margin-top: 120px; 
+            background: rgba(10, 10, 10, 0.6);
+            padding: 40px; border-radius: 12px; border: 1px solid var(--border);
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            opacity: 0; /* Hidden initially for scroll anim */
+        }
+
+        /* Scroll Animation Classes */
+        .doc-section.visible { opacity: 1; transform: translateZ(0); }
+        .doc-section:nth-child(even) { transform: translateZ(-50px) translateX(20px); }
+        .doc-section:nth-child(odd) { transform: translateZ(-50px) translateX(-20px); }
+
+        .doc-section h3 { font-size: 1.8rem; margin-bottom: 20px; color: var(--text-main); transform: translateZ(20px); }
+        .doc-section p { color: var(--text-muted); margin-bottom: 15px; transform: translateZ(10px); }
+
+        /* --- 3D Header Cube --- */
+        .docs-header-wrapper { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+        .docs-title { font-size: 2.5rem; margin: 0; transform: translateZ(30px); }
+
+        .cube-docs-container { width: 100px; height: 100px; perspective: 600px; transform: translateZ(50px); }
+        .cube-docs { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: spin-docs 15s infinite linear; }
+        .face-docs { position: absolute; width: 100px; height: 100px; border: 2px solid var(--secondary); background: rgba(112, 0, 255, 0.1); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .front { transform: rotateY(0deg) translateZ(50px); }
+        .back { transform: rotateY(180deg) translateZ(50px); }
+        .right { transform: rotateY(90deg) translateZ(50px); }
+        .left { transform: rotateY(-90deg) translateZ(50px); }
+        .top { transform: rotateX(90deg) translateZ(50px); }
+        .bottom { transform: rotateX(-90deg) translateZ(50px); }
+        @keyframes spin-docs { 100% { transform: rotateX(360deg) rotateY(360deg); } }
+
+        /* --- Code & Calls --- */
+        .code-block {
+            background: #0d1117; border: 1px solid var(--border); border-radius: 8px;
+            padding: 20px; font-family: var(--font-code); font-size: 0.85rem; overflow-x: auto; margin: 20px 0;
+            position: relative; transform: translateZ(10px);
+        }
+        .code-block::before { content: attr(data-lang); position: absolute; top: 0; right: 0; background: var(--border); color: var(--text-muted); font-size: 0.7rem; padding: 2px 8px; }
+        
+        .callout.warning { border-left: 4px solid var(--alert); padding: 15px; margin: 20px 0; color: var(--text-main); background: rgba(255, 68, 68, 0.1); border-radius: 0 4px 4px 0; transform: translateZ(15px); }
+        .line { display: block; }
+        .c-kwd { color: #ff7b72; } .c-func { color: #d2a8ff; } .c-str { color: #a5d6ff; } .c-cmt { color: #8b949e; font-style: italic; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .docs-wrapper { flex-direction: column; }
+            .docs-sidebar { width: 100%; position: relative; top: 0; }
+            .sidebar-box { transform: none; }
+            .doc-section { transform: none !important; opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D Starfield Background -->
+    <canvas id="star-canvas"></canvas>
+
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">
+                    <i class="fa-solid fa-cube"></i> openKERNEL
+                </a>
+                <div>
+                    <a href="index.html" class="nav-link">Back to Home</a>
+                    <a href="#" class="nav-link">Roadmap</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="docs">
+            <div class="container">
+                <div class="docs-wrapper">
+                    <!-- Sidebar -->
+                    <aside class="docs-sidebar">
+                        <div class="sidebar-box">
+                            <div class="docs-nav-header">Getting Started</div>
+                            <a href="#intro" class="docs-nav-link">Introduction</a>
+                            <a href="#build" class="docs-nav-link">Build System</a>
+                            <a href="#boot" class="docs-nav-link">Boot Process</a>
+                            <div class="docs-nav-header">Core</div>
+                            <a href="#memory" class="docs-nav-link">Memory Mgmt</a>
+                            <a href="#initramfs" class="docs-nav-link">Initramfs</a>
+                        </div>
+                    </aside>
+
+                    <!-- Content -->
+                    <div class="docs-content">
+                        <div class="docs-header-wrapper">
+                            <h1 class="docs-title">Documentation</h1>
+                            <!-- 3D Cube -->
+                            <div class="cube-docs-container">
+                                <div class="cube-docs">
+                                    <div class="face-docs front"><i class="fa-solid fa-file-code"></i></div>
+                                    <div class="face-docs back"><i class="fa-solid fa-microchip"></i></div>
+                                    <div class="face-docs right"><i class="fa-solid fa-cube"></i></div>
+                                    <div class="face-docs left"><i class="fa-solid fa-terminal"></i></div>
+                                    <div class="face-docs top"><i class="fa-solid fa-memory"></i></div>
+                                    <div class="face-docs bottom"><i class="fa-solid fa-code"></i></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="intro" class="doc-section">
+                            <h3>Introduction</h3>
+                            <div class="callout warning">
+                                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Important:</strong> 
+                                All code examples shown are <strong>dummy/illustrative code</strong>. The actual Git repository has not been created yet.
+                            </div>
+                            <p>openKERNEL is a hobbyist operating system kernel designed for x86_64. It aims to provide a Unix-like environment with a focus on educational value.</p>
+                        </div>
+
+                        <div id="build" class="doc-section">
+                            <h3>Build System</h3>
+                            <p>The kernel uses GNU Make and GCC (cross-compiler).</p>
+                            <div class="code-block" data-lang="bash">
+<span class="line"># Clone (Not created yet)</span>
+<span class="line">git clone https://github.com/openkernel/openkernel.git</span>
+<span class="line">cd openkernel</span>
+<span class="line">make build</span>
+                            </div>
+                        </div>
+
+                        <div id="boot" class="doc-section">
+                            <h3>Boot Process</h3>
+                            <p>The boot sequence is handled in three distinct stages.</p>
+                            <p>1. <strong>Bootloader (GRUB)</strong>: Loads the binary into memory.</p>
+                            <p>2. <strong>Assembly Entry</strong>: Switches to 64-bit Long Mode.</p>
+                            <p>3. <strong>C Kernel</strong>: Executes `kernel_main()`.</p>
+                        </div>
+
+                        <div id="memory" class="doc-section">
+                            <h3>Memory Management</h3>
+                            <p>openKERNEL uses a two-tier memory management system: PMM (Physical) and VMM (Virtual).</p>
+                            <p>The PMM uses a <strong>bitmap allocator</strong>.</p>
+                            <div class="code-block" data-lang="c">
+<span class="line"><span class="c-type">void</span> <span class="c-func">vmm_map_page</span>(<span class="c-type">uint64_t</span> virt, <span class="c-type">uint64_t</span> phys) {</span>
+<span class="line">    <span class="c-cmt">// ... Walk the page tables and alloc if needed ...</span></span>
+<span class="line">    entry[pt_idx] = phys | flags;</span>
+<span class="line">    <span class="c-func">invlpg</span>(virt);</span>
+<span class="line">}</span>
+                            </div>
+                        </div>
+
+                        <div id="initramfs" class="doc-section">
+                            <h3>Initramfs</h3>
+                            <p>Compressed CPIO archive loaded into RAM. Used for loading drivers before root FS.</p>
+                            <p>Currently supports read-only operations.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // --- 1. 3D Starfield (Z-AXIS Movement) ---
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, stars = [];
+        const starCount = 400;
+        const speed = 2;
+
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        
+        class Star {
+            constructor() {
+                this.x = (Math.random() - 0.5) * width * 2;
+                this.y = (Math.random() - 0.5) * height * 2;
+                this.z = Math.random() * width; 
+            }
+            update() {
+                this.z -= speed;
+                if (this.z <= 0) { this.z = width; this.x = (Math.random() - 0.5) * width * 2; this.y = (Math.random() - 0.5) * height * 2; }
+            }
+            draw() {
+                const sx = (this.x / this.z) * width/2 + width/2;
+                const sy = (this.y / this.z) * height/2 + height/2;
+                const r = (1 - this.z / width) * 3;
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI*2); ctx.fill();
+            }
+        }
+
+        function initStars() { stars = []; for (let i = 0; i < starCount; i++) stars.push(new Star()); }
+        function animateStars() {
+            ctx.fillStyle = 'rgba(0,0,0,0.2)'; // Trails
+            ctx.fillRect(0,0,width,height);
+            stars.forEach(s => { s.update(); s.draw(); });
+            requestAnimationFrame(animateStars);
+        }
+
+        // --- 2. 3D Scroll Parallax ---
+        const sections = document.querySelectorAll('.doc-section');
+        const sidebar = document.querySelector('.docs-sidebar');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if(entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        sections.forEach(sec => observer.observe(sec));
+
+        // --- 3. Active Link Highlighting ---
+        const navLinks = document.querySelectorAll('.docs-nav-link');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= (sectionTop - 200)) current = section.getAttribute('id');
+            });
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if(link.getAttribute('href').includes(current)) link.classList.add('active');
+            });
+        });
+
+        // --- 4. Sidebar 3D Tilt on Scroll ---
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            sidebar.style.transform = `translateZ(50px) rotateY(${scrollY * 0.05}deg)`;
+        });
+
+        window.addEventListener('resize', () => { resize(); });
+        resize(); initStars(); animateStars();
+    </script>
+</body>
+</html>

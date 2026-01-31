@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>openKERNEL | Home</title>
+    <!-- Tech Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --primary: #00f0ff;
+            --secondary: #7000ff;
+            --accent: #d29922;
+            --text-main: #e6edf3;
+            --text-muted: #8b949e;
+            --border: #30363d;
+            --font-main: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            margin: 0;
+        }
+
+        /* --- Canvas Background --- */
+        #bg-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- Header --- */
+        header {
+            position: fixed;
+            top: 0; width: 100%;
+            background: rgba(5, 5, 5, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .logo {
+            font-family: var(--font-code);
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex; align-items: center; gap: 10px;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .nav-links { display: flex; gap: 30px; }
+        .nav-link { 
+            color: var(--text-muted); font-size: 0.9rem; cursor: pointer; 
+            transition: 0.3s; text-decoration: none;
+            position: relative;
+        }
+        .nav-link:hover { color: var(--primary); }
+        .nav-link::after {
+            content: ''; position: absolute; width: 0; height: 2px; bottom: -5px; left: 0;
+            background: var(--primary); transition: 0.3s;
+        }
+        .nav-link:hover::after { width: 100%; }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-family: var(--font-code);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid transparent;
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+        }
+
+        .btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* --- Hero Section & EXTREME 3D --- */
+        .hero {
+            padding: 160px 0 100px;
+            min-height: 90vh;
+            display: flex; align-items: center;
+            perspective: 2000px; /* High perspective for deep 3D */
+        }
+
+        .hero-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px; align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+            transform: translateZ(50px); /* 3D Text Parallax */
+        }
+
+        .hero-text p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            transform: translateZ(20px);
+        }
+
+        /* 3D HUD Overlay */
+        .hud-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotateX(60deg);
+            border: 2px dashed rgba(0, 240, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: spin-hud 20s linear infinite;
+        }
+        .hud-1 { width: 400px; height: 400px; animation-duration: 20s; border-color: rgba(0, 240, 255, 0.2); }
+        .hud-2 { width: 500px; height: 500px; animation-duration: 30s; border-color: rgba(112, 0, 255, 0.2); border-style: dotted; }
+
+        @keyframes spin-hud { 100% { transform: translate(-50%, -50%) rotateX(60deg) rotateZ(360deg); } }
+
+        /* Kernel Stack */
+        .scene-container { height: 500px; display: flex; justify-content: center; align-items: center; perspective: 1000px; position: relative; }
+        
+        .kernel-stack {
+            position: relative; width: 260px; height: 260px;
+            transform-style: preserve-3d;
+            animation: float 6s ease-in-out infinite; /* Floating animation */
+            cursor: pointer;
+        }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        .layer {
+            position: absolute; width: 100%; height: 100%;
+            border: 2px solid var(--primary);
+            background: rgba(0, 240, 255, 0.05);
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-code); font-weight: 700; font-size: 1.2rem; color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2) inset;
+            backdrop-filter: blur(4px);
+            transition: 0.3s;
+        }
+        
+        .layer-userspace { transform: translateZ(80px); border-color: var(--secondary); color: var(--secondary); }
+        .layer-kernel { transform: translateZ(0px); border-color: var(--accent); color: var(--accent); }
+        .layer-hardware { transform: translateZ(-80px); border-color: var(--text-muted); color: var(--text-muted); }
+
+        /* --- 3D Feature Cards --- */
+        .features { padding: 100px 0; background: rgba(8, 8, 8, 0.8); transform-style: preserve-3d; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        
+        .card {
+            background: rgba(22, 27, 34, 0.6);
+            border: 1px solid var(--border);
+            padding: 40px;
+            border-radius: 12px;
+            transition: transform 0.1s; /* Fast transition for JS tilt */
+            transform-style: preserve-3d;
+            position: relative;
+        }
+        
+        .card-content { transform: translateZ(20px); } /* Lift content off card */
+        .card-icon { font-size: 2.5rem; margin-bottom: 25px; color: var(--primary); transform: translateZ(40px); }
+        
+        /* --- Footer 3D Cubes --- */
+        footer { 
+            border-top: 1px solid var(--border); padding: 80px 0 30px; 
+            background: #020202; text-align: center; overflow: hidden; 
+        }
+        
+        .footer-cube-scene {
+            position: absolute; bottom: -50px; right: -50px;
+            width: 200px; height: 200px;
+            pointer-events: none;
+        }
+        
+        .f-cube {
+            width: 100%; height: 100%; position: relative;
+            transform-style: preserve-3d; animation: rotate-f-cube 15s linear infinite;
+        }
+        .f-face {
+            position: absolute; width: 200px; height: 200px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(112, 0, 255, 0.05);
+        }
+        .f-front { transform: translateZ(100px); }
+        .f-back { transform: rotateY(180deg) translateZ(100px); }
+        .f-right { transform: rotateY(90deg) translateZ(100px); }
+        .f-left { transform: rotateY(-90deg) translateZ(100px); }
+        @keyframes rotate-f-cube { 100% { transform: rotateX(360deg) rotateY(360deg); } }
+
+        .copyright { margin-top: 40px; color: #444; font-size: 0.8rem; transform: translateZ(20px); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .hero-layout { grid-template-columns: 1fr; text-align: center; }
+            .hero-text h1 { font-size: 2.5rem; }
+            .nav-links { display: none; }
+            .hud-ring { display: none; } /* Hide complex 3D on mobile for performance */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D Particle Background -->
+    <canvas id="bg-canvas"></canvas>
+
+    <header>
+        <div class="container">
+            <nav>
+                <a href="index.html" class="logo">
+                    <i class="fa-solid fa-cube"></i> openKERNEL
+                </a>
+                <div class="nav-links">
+                    <a href="#features" class="nav-link">Architecture</a>
+                    <a href="docs.html" class="nav-link">Documentation</a>
+                    <a href="#" class="nav-link">Roadmap</a>
+                    <a href="#" class="nav-link">Contribute</a>
+                </div>
+                <a href="docs.html" class="btn">Read the Docs</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <div class="hero-layout">
+                    <div class="hero-text">
+                        <div style="color:var(--accent); font-family:var(--font-code); margin-bottom:10px; font-size:0.9rem;">
+                            <i class="fa-solid fa-wrench"></i> STATUS: CONSTRUCTION
+                        </div>
+                        <h1>Building the <br><span class="gradient-text">Next Gen Kernel.</span></h1>
+                        <p>
+                            A lightweight monolithic kernel written in pure C. 
+                            Currently under active development with experimental Initramfs handling and memory management.
+                        </p>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: start;">
+                            <a href="docs.html" class="btn">Read Documentation</a>
+                            <a href="docs.html" style="border:1px solid var(--border); padding:12px 30px; border-radius:4px; text-decoration:none; color:var(--text-muted); font-family:var(--font-code); font-weight:700; font-size:0.9rem;">Contribute</a>
+                        </div>
+                    </div>
+
+                    <div class="scene-container">
+                        <!-- Extra 3D HUD Rings -->
+                        <div class="hud-ring hud-1"></div>
+                        <div class="hud-ring hud-2"></div>
+
+                        <div class="kernel-stack" id="stack">
+                            <div class="layer layer-userspace">USERSPACE</div>
+                            <div class="layer layer-kernel">KERNEL CORE</div>
+                            <div class="layer layer-hardware">HARDWARE</div>
+                            <div style="position: absolute; width: 2px; height: 160px; background: var(--border); left: 50%; top: 50%; transform: translate(-50%, -50%) rotateY(90deg);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <div class="grid-3">
+                    <div class="card tilt-card">
+                        <div class="card-content">
+                            <div class="card-icon"><i class="fa-solid fa-layer-group"></i></div>
+                            <h3>Monolithic Design</h3>
+                            <p>High-speed execution within a single address space. Currently implementing context switching for kernel services.</p>
+                        </div>
+                    </div>
+                    <div class="card tilt-card">
+                        <div class="card-content">
+                            <div class="card-icon"><i class="fa-solid fa-compress"></i></div>
+                            <h3>CPIO Initramfs</h3>
+                            <p>Compressed early filesystem loaded into RAM. Driver loading and decryption key handling is in progress.</p>
+                        </div>
+                    </div>
+                    <div class="card tilt-card">
+                        <div class="card-content">
+                            <div class="card-icon"><i class="fa-solid fa-memory"></i></div>
+                            <h3>Custom Heap</h3>
+                            <p>Implementation of `kmalloc` and `kfree` using a bitmap allocator for efficient physical memory management.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="footer-cube-scene">
+            <div class="f-cube">
+                <div class="f-face f-front"></div>
+                <div class="f-face f-back"></div>
+                <div class="f-face f-right"></div>
+                <div class="f-face f-left"></div>
+                <div class="f-face" style="transform:rotateX(90deg) translateZ(100px)"></div>
+                <div class="f-face" style="transform:rotateX(-90deg) translateZ(100px)"></div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="copyright">
+                &copy; 2026 openKERNEL Project. Work in Progress. No downloads available.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. Hero Stack 3D Tilt ---
+        const stack = document.getElementById('stack');
+        const heroScene = document.querySelector('.scene-container');
+
+        heroScene.addEventListener('mousemove', (e) => {
+            const rect = heroScene.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            stack.style.transform = `rotateX(${-y/10}deg) rotateY(${x/10}deg)`;
+        });
+        heroScene.addEventListener('mouseleave', () => { stack.style.transform = `rotateX(0deg) rotateY(0deg)`; });
+
+        // --- 2. Feature Cards 3D Tilt (Extra 3D) ---
+        const cards = document.querySelectorAll('.tilt-card');
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                card.style.transform = `perspective(1000px) rotateX(${-y/10}deg) rotateY(${x/10}deg)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = `perspective(1000px) rotateX(0) rotateY(0)`;
+            });
+        });
+
+        // --- 3. Background Particle Network ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+        const particleCount = 70;
+        const connectionDistance = 160;
+
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width; this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 1;
+            }
+            update() { this.x += this.vx; this.y += this.vy; if (this.x < 0 || this.x > width) this.vx *= -1; if (this.y < 0 || this.y > height) this.vy *= -1; }
+            draw() { ctx.fillStyle = '#00f0ff'; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+        }
+        function initParticles() { particles = []; for (let i = 0; i < particleCount; i++) particles.push(new Particle()); }
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update(); particles[i].draw();
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < connectionDistance) {
+                        ctx.beginPath(); ctx.strokeStyle = `rgba(0, 240, 255, ${1 - distance / connectionDistance})`; ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+        window.addEventListener('resize', () => { resize(); initParticles(); });
+        resize(); initParticles(); animate();
+    </script>
+</body>
+</html>
